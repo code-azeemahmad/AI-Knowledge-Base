@@ -1,7 +1,10 @@
-# backend\app\core\dependencies.py
 from contextlib import asynccontextmanager
 
+import httpx
 from app.core.config import settings
+from app.embeddings.base import EmbeddingProvider
+from app.embeddings.ollama_embeddings import OllamaEmbeddingProvider
+from app.schemas.embedding import EmbeddingRequest
 from app.vector_store.qdrant_store import QdrantStore
 from fastapi import Depends, FastAPI, Request
 from qdrant_client import AsyncQdrantClient
@@ -10,25 +13,46 @@ from qdrant_client import AsyncQdrantClient
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Lifespan manages the application lifecycle. QdrantStore manages Qdrant.
+    Application lifecycle management.
     """
-    client = AsyncQdrantClient(
+
+    qdrant_client = AsyncQdrantClient(
         host=settings.QDRANT_HOST,
         port=settings.QDRANT_PORT,
     )
 
-    app.state.qdrant_client = client
-    store = QdrantStore(client)
-    
-    await store.ensure_collection()
-    
-    yield
+    http_client = httpx.AsyncClient()
 
-    await client.close()
+    try:
+        app.state.qdrant_client = qdrant_client
+        app.state.http_client = http_client
+
+        store = QdrantStore(qdrant_client)
+        await store.ensure_collection()
+        
+        provider = OllamaEmbeddingProvider(http_client)
+
+        result = await provider.embed(
+            EmbeddingRequest(
+                text="FastAPI is an async web framework."
+            )
+        )
+
+        print(len(result.embedding))
+
+        yield
+
+    finally:
+        await http_client.aclose()
+        await qdrant_client.close()
 
 
 def get_qdrant_client(request: Request) -> AsyncQdrantClient:
     return request.app.state.qdrant_client
+
+
+def get_http_client(request: Request) -> httpx.AsyncClient:
+    return request.app.state.http_client
 
 
 def get_vector_store(
@@ -36,3 +60,8 @@ def get_vector_store(
 ) -> QdrantStore:
     return QdrantStore(client)
 
+
+def get_embedding_provider(
+    client: httpx.AsyncClient = Depends(get_http_client),  # noqa: B008
+) -> EmbeddingProvider:
+    return OllamaEmbeddingProvider(client)
