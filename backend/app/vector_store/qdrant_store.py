@@ -7,6 +7,8 @@ from app.vector_store.utils import get_distance
 from qdrant_client.models import PointStruct
 from app.schemas.vector import VectorPoint
 
+from app.schemas.search import SearchResult
+
 class QdrantStore:
 
     def __init__(self, client: AsyncQdrantClient):
@@ -81,3 +83,30 @@ class QdrantStore:
             collection_name=collection_name,
             points=qdrant_points,
         )
+        
+        
+    async def search(
+        self,
+        query_vector: list[float],
+        limit: int = 5,
+        collection_name: str = settings.DEFAULT_COLLECTION,
+    ) -> list[SearchResult]:
+        """
+        Perform semantic similarity search.
+        """
+
+        results = await self.client.query_points(
+            collection_name=collection_name,
+            query=query_vector,
+            limit=limit,
+            with_payload=True,
+        )
+
+        return [
+            SearchResult(
+                id=point.id,
+                score=point.score,
+                payload=point.payload or {},
+            )
+            for point in results.points
+        ]

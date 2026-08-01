@@ -4,8 +4,7 @@ import httpx
 from app.core.config import settings
 from app.embeddings.base import EmbeddingProvider
 from app.embeddings.ollama_embeddings import OllamaEmbeddingProvider
-from app.schemas.embedding import EmbeddingRequest
-from app.schemas.vector import VectorPoint
+from app.services.search_service import SearchService
 from app.vector_store.qdrant_store import QdrantStore
 from fastapi import Depends, FastAPI, Request
 from qdrant_client import AsyncQdrantClient
@@ -30,27 +29,6 @@ async def lifespan(app: FastAPI):
 
         store = QdrantStore(qdrant_client)
         await store.ensure_collection()
-        
-        provider = OllamaEmbeddingProvider(http_client)
-
-        result = await provider.embed(
-            EmbeddingRequest(
-                text="FastAPI is an async web framework."
-            )
-        )
-
-        point = VectorPoint(
-            vector=result.embedding,
-            payload={
-                "text": "FastAPI is an async web framework.",
-                "source": "startup-test",
-            },
-        )
-
-        await store.upsert([point])
-
-        print("Inserted first vector into Qdrant.")
-        
 
         yield
 
@@ -78,6 +56,14 @@ def get_embedding_provider(
 ) -> EmbeddingProvider:
     return OllamaEmbeddingProvider(client)
 
+def get_search_service(
+    embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
+    vector_store: QdrantStore = Depends(get_vector_store),  # noqa: B008
+) -> SearchService:
+    return SearchService(
+        embedding_provider=embedding_provider,
+        vector_store=vector_store,
+    )
 
 '''
 The lifespan() should only:
