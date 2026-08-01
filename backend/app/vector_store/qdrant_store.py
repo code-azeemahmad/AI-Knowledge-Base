@@ -4,6 +4,9 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import VectorParams
 from app.vector_store.utils import get_distance
 
+from qdrant_client.models import PointStruct
+from app.schemas.vector import VectorPoint
+
 class QdrantStore:
 
     def __init__(self, client: AsyncQdrantClient):
@@ -54,3 +57,27 @@ class QdrantStore:
             return
 
         await self.create_collection(collection_name)
+        
+
+    async def upsert(
+        self,
+        points: list[VectorPoint],
+        collection_name: str = settings.DEFAULT_COLLECTION,
+    ) -> None:
+        """
+        Insert or update points in Qdrant.
+        """
+
+        qdrant_points = [
+            PointStruct(
+                id=str(point.id),
+                vector=point.vector,
+                payload=point.payload,
+            )
+            for point in points
+        ]
+
+        await self.client.upsert(
+            collection_name=collection_name,
+            points=qdrant_points,
+        )
