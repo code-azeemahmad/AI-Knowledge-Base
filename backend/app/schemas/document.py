@@ -8,3 +8,7 @@ class CreateDocumentRequest(BaseModel):
 
 class CreateDocumentResponse(BaseModel):
     message: str
+    
+
+class DeleteDocumentResponse(BaseModel):
+    message: str

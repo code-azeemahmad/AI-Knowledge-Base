@@ -9,6 +9,9 @@ from app.schemas.vector import VectorPoint
 
 from app.schemas.search import SearchResult
 
+from qdrant_client.models import PointIdsList
+
+
 class QdrantStore:
 
     def __init__(self, client: AsyncQdrantClient):
@@ -42,7 +45,6 @@ class QdrantStore:
         )
 
         print(f"Created collection: {collection_name}")
-        
 
     async def ensure_collection(
         self,
@@ -59,7 +61,6 @@ class QdrantStore:
             return
 
         await self.create_collection(collection_name)
-        
 
     async def upsert(
         self,
@@ -83,8 +84,7 @@ class QdrantStore:
             collection_name=collection_name,
             points=qdrant_points,
         )
-        
-        
+
     async def search(
         self,
         query_vector: list[float],
@@ -110,3 +110,19 @@ class QdrantStore:
             )
             for point in results.points
         ]
+
+    async def delete(
+        self,
+        point_id: str,
+        collection_name: str = settings.DEFAULT_COLLECTION,
+    ) -> None:
+        """
+        Delete a point from Qdrant.
+        """
+
+        await self.client.delete(
+            collection_name=collection_name,
+            points_selector=PointIdsList(
+                points=[point_id],
+            ),
+        )

@@ -28,9 +28,6 @@ async def lifespan(app: FastAPI):
         app.state.qdrant_client = qdrant_client
         app.state.http_client = http_client
 
-        store = QdrantStore(qdrant_client)
-        await store.ensure_collection()
-
         yield
 
     finally:

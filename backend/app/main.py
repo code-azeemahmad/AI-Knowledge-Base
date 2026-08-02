@@ -10,5 +10,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Including document_router automatically includes both POST and DELETE!
 app.include_router(search_router)   
 app.include_router(document_router)
+
+@app.get("/", tags=["Health"])
+async def root():
+    return {"status": "ok", "message": "AI Knowledge Base API is running"}

@@ -2,6 +2,7 @@ from app.embeddings.base import EmbeddingProvider
 from app.schemas.document import (
     CreateDocumentRequest,
     CreateDocumentResponse,
+    DeleteDocumentResponse,
 )
 from app.schemas.embedding import EmbeddingRequest
 from app.schemas.vector import VectorPoint
@@ -47,4 +48,16 @@ class DocumentService:
 
         return CreateDocumentResponse(
             message="Document stored successfully."
+        )
+        
+
+    async def delete_document(
+        self,
+        document_id: str,
+    ) -> DeleteDocumentResponse:
+
+        await self.vector_store.delete(document_id)
+
+        return DeleteDocumentResponse(
+            message="Document deleted successfully."
         )
