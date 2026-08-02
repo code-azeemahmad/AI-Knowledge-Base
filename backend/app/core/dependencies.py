@@ -1,3 +1,4 @@
+# backend\app\core\dependencies.py
 from contextlib import asynccontextmanager
 
 import httpx
@@ -7,6 +8,7 @@ from app.embeddings.base import EmbeddingProvider
 from app.embeddings.ollama_embeddings import OllamaEmbeddingProvider
 from app.services.document_service import DocumentService
 from app.services.health_service import HealthService
+from app.services.indexing_service import IndexingService
 from app.services.product_service import ProductService
 from app.services.search_service import SearchService
 from app.vector_store.qdrant_store import QdrantStore
@@ -78,3 +80,13 @@ def get_product_service(
 
 def get_health_service(client: AsyncQdrantClient = Depends(get_qdrant_client)) -> HealthService:  # noqa: B008
     return HealthService(client)
+
+
+def get_indexing_service(
+    embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
+    vector_store: QdrantStore = Depends(get_vector_store),  # noqa: B008
+) -> IndexingService:
+    return IndexingService(
+        embedding_provider=embedding_provider,
+        vector_store=vector_store,
+    )

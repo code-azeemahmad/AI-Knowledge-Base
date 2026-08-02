@@ -1,11 +1,12 @@
-from app.core.dependencies import get_document_service
+from app.core.dependencies import get_document_service, get_indexing_service
 from app.schemas.document import (
     CreateDocumentRequest,
     CreateDocumentResponse,
     DeleteDocumentResponse,
 )
-from app.schemas.upload import UploadResponse
+from app.schemas.indexing import IndexingResponse
 from app.services.document_service import DocumentService
+from app.services.indexing_service import IndexingService
 from fastapi import APIRouter, Depends, File, UploadFile
 
 router = APIRouter(
@@ -38,11 +39,11 @@ async def delete_document(
 
 
 @router.post(
-    "/upload",
-    response_model=UploadResponse,
+    "/index",
+    response_model=IndexingResponse,
 )
-async def upload_document(
+async def index_document(
     file: UploadFile = File(...),  # noqa: B008
-    service: DocumentService = Depends(get_document_service),  # noqa: B008
-) -> UploadResponse:
-    return await service.upload_document(file)
+    service: IndexingService = Depends(get_indexing_service)  # noqa: B008
+) -> IndexingResponse:
+    return await service.index_document(file)

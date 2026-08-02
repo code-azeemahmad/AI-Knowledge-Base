@@ -1,3 +1,4 @@
+# backend\app\vector_store\qdrant_store.py
 from app.core.collections import CollectionConfig
 from app.schemas.search import SearchResult
 from app.schemas.vector import VectorPoint

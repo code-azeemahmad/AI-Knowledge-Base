@@ -1,3 +1,4 @@
+# backend\app\embeddings\ollama_embeddings.py
 import httpx
 from app.core.config import settings
 from app.embeddings.base import EmbeddingProvider
