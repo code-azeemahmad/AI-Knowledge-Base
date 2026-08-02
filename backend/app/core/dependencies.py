@@ -6,6 +6,7 @@ from app.core.collections import ALL_COLLECTIONS
 from app.core.config import settings
 from app.embeddings.base import EmbeddingProvider
 from app.embeddings.ollama_embeddings import OllamaEmbeddingProvider
+from app.retrieval.retriever import Retriever
 from app.services.document_service import DocumentService
 from app.services.health_service import HealthService
 from app.services.indexing_service import IndexingService
@@ -87,6 +88,16 @@ def get_indexing_service(
     vector_store: QdrantStore = Depends(get_vector_store),  # noqa: B008
 ) -> IndexingService:
     return IndexingService(
+        embedding_provider=embedding_provider,
+        vector_store=vector_store,
+    )
+
+
+def get_retriever(
+    embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
+    vector_store: QdrantStore = Depends(get_vector_store),  # noqa: B008
+) -> Retriever:
+    return Retriever(
         embedding_provider=embedding_provider,
         vector_store=vector_store,
     )

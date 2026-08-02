@@ -1,5 +1,6 @@
 import os
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -8,6 +9,7 @@ from app.core.collections import DOCUMENTS_COLLECTION
 from app.embeddings.base import EmbeddingProvider
 from app.loaders.factory import LoaderFactory
 from app.schemas.document_chunk import DocumentChunk
+from app.schemas.document_metadata import DocumentMetadata
 from app.schemas.embedding import EmbeddingRequest
 from app.schemas.indexing import IndexingResponse
 from app.schemas.vector import VectorPoint
@@ -92,6 +94,15 @@ class IndexingService:
                 DOCUMENTS_COLLECTION,
                 points,
             )
+
+            metadata = DocumentMetadata(
+                document_id=document_id,
+                filename=file.filename,
+                chunks=len(points),
+                uploaded_at=datetime.utcnow(),  # noqa: DTZ003
+            )
+
+            self.registry.add(metadata)            
 
             return IndexingResponse(
                 document_id=document_id,
