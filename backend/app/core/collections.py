@@ -28,3 +28,9 @@ PRODUCTS_COLLECTION = CollectionConfig(
     dimension=768,
     distance=Distance.COSINE,
 )
+
+ALL_COLLECTIONS = [
+    DOCUMENTS_COLLECTION,
+    PRODUCTS_COLLECTION,
+    CHAT_MEMORY_COLLECTION,
+]

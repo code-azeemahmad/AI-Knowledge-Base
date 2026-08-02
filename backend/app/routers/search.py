@@ -1,10 +1,11 @@
+from fastapi import APIRouter, Depends
+
 from app.core.dependencies import get_search_service
 from app.schemas.search import (
     SearchRequest,
     SearchResponse,
 )
 from app.services.search_service import SearchService
-from fastapi import APIRouter, Depends
 
 router = APIRouter(
     prefix="/api/v1/search",

@@ -1,3 +1,5 @@
+from fastapi import APIRouter, Depends
+
 from app.core.dependencies import get_document_service
 from app.schemas.document import (
     CreateDocumentRequest,
@@ -5,7 +7,6 @@ from app.schemas.document import (
     DeleteDocumentResponse,
 )
 from app.services.document_service import DocumentService
-from fastapi import APIRouter, Depends
 
 router = APIRouter(
     prefix="/api/v1/documents",

@@ -1,3 +1,5 @@
+from fastapi import APIRouter, Depends
+
 from app.core.dependencies import get_product_service
 from app.schemas.product import (
     CreateProductRequest,
@@ -5,7 +7,6 @@ from app.schemas.product import (
     DeleteProductResponse,
 )
 from app.services.product_service import ProductService
-from fastapi import APIRouter, Depends
 
 router = APIRouter(
     prefix="/api/v1/products",
