@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 
 import httpx
+from app.core.collections import DOCUMENTS_COLLECTION, PRODUCTS_COLLECTION
 from app.core.config import settings
 from app.embeddings.base import EmbeddingProvider
 from app.embeddings.ollama_embeddings import OllamaEmbeddingProvider
 from app.services.document_service import DocumentService
+from app.services.product_service import ProductService
 from app.services.search_service import SearchService
 from app.vector_store.qdrant_store import QdrantStore
 from fastapi import Depends, FastAPI, Request
@@ -23,6 +25,10 @@ async def lifespan(app: FastAPI):
     )
 
     http_client = httpx.AsyncClient()
+
+    store = QdrantStore(qdrant_client)
+    await store.ensure_collection(DOCUMENTS_COLLECTION)
+    await store.ensure_collection(PRODUCTS_COLLECTION)
 
     try:
         app.state.qdrant_client = qdrant_client
@@ -54,8 +60,11 @@ def get_embedding_provider(
 ) -> EmbeddingProvider:
     return OllamaEmbeddingProvider(client)
 
+
 def get_search_service(
-    embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
+    embedding_provider: EmbeddingProvider = Depends(  # noqa: B008
+        get_embedding_provider
+    ),
     vector_store: QdrantStore = Depends(get_vector_store),  # noqa: B008
 ) -> SearchService:
     return SearchService(
@@ -65,10 +74,22 @@ def get_search_service(
 
 
 def get_document_service(
-    embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
+    embedding_provider: EmbeddingProvider = Depends(    # # noqa: B008
+        get_embedding_provider
+    ),  
     vector_store: QdrantStore = Depends(get_vector_store),  # noqa: B008
 ) -> DocumentService:
     return DocumentService(
+        embedding_provider=embedding_provider,
+        vector_store=vector_store,
+    )
+
+
+def get_product_service(
+    embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
+    vector_store: QdrantStore = Depends(get_vector_store),  # noqa: B008
+) -> ProductService:
+    return ProductService(
         embedding_provider=embedding_provider,
         vector_store=vector_store,
     )

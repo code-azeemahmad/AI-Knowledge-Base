@@ -1,75 +1,57 @@
-# backend\app\vector_store\qdrant_store.py
-from app.core.config import settings  # noqa: I001
-from qdrant_client import AsyncQdrantClient
-from qdrant_client.models import VectorParams
-from app.vector_store.utils import get_distance
-
-from qdrant_client.models import PointStruct
-from app.schemas.vector import VectorPoint
-
+from app.core.collections import CollectionConfig
 from app.schemas.search import SearchResult
+from app.schemas.vector import VectorPoint
+from app.vector_store.base import VectorStore
+from qdrant_client import AsyncQdrantClient
+from qdrant_client.models import (
+    PointIdsList,
+    PointStruct,
+    VectorParams,
+)
 
-from qdrant_client.models import PointIdsList
 
-
-class QdrantStore:
+class QdrantStore(VectorStore):
 
     def __init__(self, client: AsyncQdrantClient):
         self.client = client
 
     async def collection_exists(
         self,
-        collection_name: str = settings.DEFAULT_COLLECTION,
+        collection: CollectionConfig,
     ) -> bool:
-        """
-        Check whether a collection already exists.
-        """
         return await self.client.collection_exists(
-            collection_name=collection_name,
+            collection_name=collection.name,
         )
 
     async def create_collection(
         self,
-        collection_name: str = settings.DEFAULT_COLLECTION,
+        collection: CollectionConfig,
     ) -> None:
-        """
-        Create a new Qdrant collection.
-        """
-
         await self.client.create_collection(
-            collection_name=collection_name,
+            collection_name=collection.name,
             vectors_config=VectorParams(
-                size=settings.EMBEDDING_DIMENSION,
-                distance=get_distance(settings.VECTOR_DISTANCE),
+                size=collection.dimension,
+                distance=collection.distance,
             ),
         )
 
-        print(f"Created collection: {collection_name}")
-
     async def ensure_collection(
         self,
-        collection_name: str = settings.DEFAULT_COLLECTION,
+        collection: CollectionConfig,
     ) -> None:
-        """
-        Ensure that the collection exists.
-        """
+        exists = await self.collection_exists(collection)
 
-        exists = await self.collection_exists(collection_name)
-
-        if exists:
-            print(f"Collection '{collection_name}' already exists.")
-            return
-
-        await self.create_collection(collection_name)
+        if not exists:
+            await self.create_collection(collection)
+            print(f"Collection '{collection.name}' created.")
+        else:
+            print(f"Collection '{collection.name}' already exists.")
 
     async def upsert(
         self,
+        collection: CollectionConfig,
         points: list[VectorPoint],
-        collection_name: str = settings.DEFAULT_COLLECTION,
     ) -> None:
-        """
-        Insert or update points in Qdrant.
-        """
 
         qdrant_points = [
             PointStruct(
@@ -81,22 +63,19 @@ class QdrantStore:
         ]
 
         await self.client.upsert(
-            collection_name=collection_name,
+            collection_name=collection.name,
             points=qdrant_points,
         )
 
     async def search(
         self,
+        collection: CollectionConfig,
         query_vector: list[float],
         limit: int = 5,
-        collection_name: str = settings.DEFAULT_COLLECTION,
     ) -> list[SearchResult]:
-        """
-        Perform semantic similarity search.
-        """
 
         results = await self.client.query_points(
-            collection_name=collection_name,
+            collection_name=collection.name,
             query=query_vector,
             limit=limit,
             with_payload=True,
@@ -113,15 +92,12 @@ class QdrantStore:
 
     async def delete(
         self,
+        collection: CollectionConfig,
         point_id: str,
-        collection_name: str = settings.DEFAULT_COLLECTION,
     ) -> None:
-        """
-        Delete a point from Qdrant.
-        """
 
         await self.client.delete(
-            collection_name=collection_name,
+            collection_name=collection.name,
             points_selector=PointIdsList(
                 points=[point_id],
             ),

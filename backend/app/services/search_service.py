@@ -1,3 +1,4 @@
+from app.core.collections import DOCUMENTS_COLLECTION, PRODUCTS_COLLECTION
 from app.embeddings.base import EmbeddingProvider
 from app.schemas.embedding import EmbeddingRequest
 from app.schemas.search import (
@@ -29,6 +30,13 @@ class SearchService:
         )
 
         results = await self.vector_store.search(
+            collection=DOCUMENTS_COLLECTION,
+            query_vector=embedding.embedding,
+            limit=request.limit,
+        )
+        
+        results = await self.vector_store.search(
+            collection=PRODUCTS_COLLECTION,
             query_vector=embedding.embedding,
             limit=request.limit,
         )

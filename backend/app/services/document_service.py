@@ -1,3 +1,4 @@
+from app.core.collections import DOCUMENTS_COLLECTION
 from app.embeddings.base import EmbeddingProvider
 from app.schemas.document import (
     CreateDocumentRequest,
@@ -44,20 +45,21 @@ class DocumentService:
             },
         )
 
-        await self.vector_store.upsert([point])
-
-        return CreateDocumentResponse(
-            message="Document stored successfully."
+        await self.vector_store.upsert(
+            collection=DOCUMENTS_COLLECTION,
+            points=[point],
         )
-        
+
+        return CreateDocumentResponse(message="Document stored successfully.")
 
     async def delete_document(
         self,
         document_id: str,
     ) -> DeleteDocumentResponse:
 
-        await self.vector_store.delete(document_id)
-
-        return DeleteDocumentResponse(
-            message="Document deleted successfully."
+        await self.vector_store.delete(
+            collection=DOCUMENTS_COLLECTION,
+            point_id=document_id,
         )
+
+        return DeleteDocumentResponse(message="Document deleted successfully.")

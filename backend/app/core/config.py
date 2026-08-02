@@ -11,10 +11,10 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     EMBEDDING_MODEL: str = "nomic-embed-text"
     
-    EMBEDDING_DIMENSION: int = 768
-    DEFAULT_COLLECTION: str = "documents"
-    VECTOR_DISTANCE: str = "cosine"
-
+    EMBEDDING_DIMENSION: int
+    DEFAULT_COLLECTION: str
+    VECTOR_DISTANCE: str
+    
     # Pydantic v2 Configuration
     model_config = SettingsConfigDict(
         env_file=".env",

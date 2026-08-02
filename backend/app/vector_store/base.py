@@ -1,35 +1,47 @@
-# backend\app\vector_store\base.py
 from abc import ABC, abstractmethod
 
+from app.core.collections import CollectionConfig
+from app.schemas.search import SearchResult
 from app.schemas.vector import VectorPoint
 
 
 class VectorStore(ABC):
 
     @abstractmethod
-    async def collection_exists(self, collection_name: str) -> bool:
-        """Return True if the collection exists."""
+    async def create_collection(
+        self,
+        collection: CollectionConfig,
+    ) -> None:
         ...
 
     @abstractmethod
-    async def create_collection(self) -> None:
-        ...
-
-    @abstractmethod
-    async def ensure_collection(self) -> None:
+    async def ensure_collection(
+        self,
+        collection: CollectionConfig,
+    ) -> None:
         ...
 
     @abstractmethod
     async def upsert(
         self,
+        collection: CollectionConfig,
         points: list[VectorPoint],
     ) -> None:
         ...
 
     @abstractmethod
-    async def search(self):
+    async def search(
+        self,
+        collection: CollectionConfig,
+        query_vector: list[float],
+        limit: int = 5,
+    ) -> list[SearchResult]:
         ...
 
     @abstractmethod
-    async def delete(self):
+    async def delete(
+        self,
+        collection: CollectionConfig,
+        point_id: str,
+    ) -> None:
         ...
