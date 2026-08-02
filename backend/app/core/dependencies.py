@@ -4,6 +4,7 @@ import httpx
 from app.core.config import settings
 from app.embeddings.base import EmbeddingProvider
 from app.embeddings.ollama_embeddings import OllamaEmbeddingProvider
+from app.services.document_service import DocumentService
 from app.services.search_service import SearchService
 from app.vector_store.qdrant_store import QdrantStore
 from fastapi import Depends, FastAPI, Request
@@ -65,15 +66,12 @@ def get_search_service(
         vector_store=vector_store,
     )
 
-'''
-The lifespan() should only:
 
-Create the Qdrant client
-Create the shared httpx.AsyncClient
-Store both in app.state
-Ensure the collection exists
-Yield
-Clean up resources
-
-From now on, all embedding and vector operations will happen through services and API endpoints—not during application startup.
-'''
+def get_document_service(
+    embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
+    vector_store: QdrantStore = Depends(get_vector_store),  # noqa: B008
+) -> DocumentService:
+    return DocumentService(
+        embedding_provider=embedding_provider,
+        vector_store=vector_store,
+    )
