@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends
-
 from app.core.dependencies import get_document_service
 from app.schemas.document import (
     CreateDocumentRequest,
     CreateDocumentResponse,
     DeleteDocumentResponse,
 )
+from app.schemas.upload import UploadResponse
 from app.services.document_service import DocumentService
+from fastapi import APIRouter, Depends, File, UploadFile
 
 router = APIRouter(
     prefix="/api/v1/documents",
@@ -35,3 +35,14 @@ async def delete_document(
     service: DocumentService = Depends(get_document_service),  # noqa: B008
 ) -> DeleteDocumentResponse:
     return await service.delete_document(document_id)
+
+
+@router.post(
+    "/upload",
+    response_model=UploadResponse,
+)
+async def upload_document(
+    file: UploadFile = File(...),  # noqa: B008
+    service: DocumentService = Depends(get_document_service),  # noqa: B008
+) -> UploadResponse:
+    return await service.upload_document(file)

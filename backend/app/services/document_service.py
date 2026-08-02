@@ -1,13 +1,20 @@
+import os
+import tempfile
+from pathlib import Path
+
 from app.core.collections import DOCUMENTS_COLLECTION
 from app.embeddings.base import EmbeddingProvider
+from app.loaders.factory import LoaderFactory
 from app.schemas.document import (
     CreateDocumentRequest,
     CreateDocumentResponse,
     DeleteDocumentResponse,
 )
 from app.schemas.embedding import EmbeddingRequest
+from app.schemas.upload import UploadResponse
 from app.schemas.vector import VectorPoint
 from app.vector_store.qdrant_store import QdrantStore
+from fastapi import UploadFile
 
 
 class DocumentService:
@@ -63,3 +70,40 @@ class DocumentService:
         )
 
         return DeleteDocumentResponse(message="Document deleted successfully.")
+
+
+    async def upload_document(
+        self,
+        file: UploadFile,
+    ) -> UploadResponse:
+        """
+        Upload a document and extract its text.
+        """
+
+        suffix = Path(file.filename).suffix
+
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=suffix,
+        ) as temp_file:
+
+            content = await file.read()
+
+            temp_file.write(content)
+
+            temp_path = temp_file.name
+
+        try:
+            loader = LoaderFactory.get_loader(
+                file.filename,
+            )
+
+            text = await loader.load(temp_path)
+
+            return UploadResponse(
+                filename=file.filename,
+                text=text,
+            )
+
+        finally:
+            os.remove(temp_path)

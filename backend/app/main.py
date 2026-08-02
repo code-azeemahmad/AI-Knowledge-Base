@@ -1,11 +1,10 @@
 # backend\app\main.py
-from fastapi import FastAPI
-
 from app.core.dependencies import lifespan
 from app.routers.document import router as document_router
 from app.routers.health import router as health_router
 from app.routers.product import router as product_router
 from app.routers.search import router as search_router
+from fastapi import FastAPI
 
 app = FastAPI(
     title="AI Knowledge Base",
