@@ -1,5 +1,6 @@
 from app.core.collections import DOCUMENTS_COLLECTION
 from app.embeddings.base import EmbeddingProvider
+from app.retrieval.retrieval import DEFAULT_RETRIEVAL
 from app.schemas.embedding import EmbeddingRequest
 from app.schemas.search import SearchResult
 from app.vector_store.base import VectorStore
@@ -22,8 +23,10 @@ class Retriever:
     async def retrieve(
         self,
         question: str,
-        limit: int = 5,
+        limit: int | None = None,
     ) -> list[SearchResult]:
+
+        search_limit = limit or DEFAULT_RETRIEVAL.top_k
 
         embedding = await self.embedding_provider.embed(
             EmbeddingRequest(
@@ -31,8 +34,16 @@ class Retriever:
             )
         )
 
-        return await self.vector_store.search(
+        results = await self.vector_store.search(
             collection=DOCUMENTS_COLLECTION,
             query_vector=embedding.embedding,
-            limit=limit,
+            limit=search_limit,
         )
+
+        results = [
+            result
+            for result in results
+            if result.score >= DEFAULT_RETRIEVAL.score_threshold
+        ]
+
+        return results
