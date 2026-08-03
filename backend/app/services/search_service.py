@@ -5,7 +5,7 @@ from app.schemas.search import (
     SearchRequest,
     SearchResponse,
 )
-from app.vector_store.qdrant_store import QdrantStore
+from app.vector_store.base import VectorStore
 
 
 class SearchService:
@@ -13,7 +13,7 @@ class SearchService:
     def __init__(
         self,
         embedding_provider: EmbeddingProvider,
-        vector_store: QdrantStore,
+        vector_store: VectorStore,
     ):
         self.embedding_provider = embedding_provider
         self.vector_store = vector_store
@@ -29,17 +29,23 @@ class SearchService:
             )
         )
 
-        results = await self.vector_store.search(
+        document_results = await self.vector_store.search(
             collection=DOCUMENTS_COLLECTION,
             query_vector=embedding.embedding,
             limit=request.limit,
         )
-        
-        results = await self.vector_store.search(
+
+        product_results = await self.vector_store.search(
             collection=PRODUCTS_COLLECTION,
             query_vector=embedding.embedding,
             limit=request.limit,
         )
+
+        results = document_results + product_results
+
+        results.sort(key=lambda x: x.score, reverse=True)
+
+        results = results[: request.limit]
 
         return SearchResponse(
             results=results,

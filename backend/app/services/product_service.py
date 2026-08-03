@@ -7,7 +7,7 @@ from app.schemas.product import (
     DeleteProductResponse,
 )
 from app.schemas.vector import VectorPoint
-from app.vector_store.qdrant_store import QdrantStore
+from app.vector_store.base import VectorStore
 
 
 class ProductService:
@@ -18,7 +18,7 @@ class ProductService:
     def __init__(
         self,
         embedding_provider: EmbeddingProvider,
-        vector_store: QdrantStore,
+        vector_store: VectorStore,
     ):
         self.embedding_provider = embedding_provider
         self.vector_store = vector_store

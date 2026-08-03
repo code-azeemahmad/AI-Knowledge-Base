@@ -2,7 +2,7 @@ from app.core.collections import DOCUMENTS_COLLECTION
 from app.embeddings.base import EmbeddingProvider
 from app.schemas.embedding import EmbeddingRequest
 from app.schemas.search import SearchResult
-from app.vector_store.qdrant_store import QdrantStore
+from app.vector_store.base import VectorStore
 
 
 class Retriever:
@@ -14,7 +14,7 @@ class Retriever:
     def __init__(
         self,
         embedding_provider: EmbeddingProvider,
-        vector_store: QdrantStore,
+        vector_store: VectorStore,
     ):
         self.embedding_provider = embedding_provider
         self.vector_store = vector_store

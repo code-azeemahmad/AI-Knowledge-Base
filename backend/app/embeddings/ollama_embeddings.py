@@ -20,7 +20,7 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
     ) -> EmbeddingResponse:
 
         response = await self.client.post(
-            f"{settings.OLLAMA_BASE_URL}/api/embed",
+            f"{settings.ollama_base_url}/api/embed",
             json={
                 "model": settings.EMBEDDING_MODEL,
                 "input": request.text,
