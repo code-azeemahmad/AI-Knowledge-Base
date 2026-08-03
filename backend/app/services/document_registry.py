@@ -1,3 +1,4 @@
+# backend\app\services\document_registry.py
 from app.schemas.document_metadata import DocumentMetadata
 
 

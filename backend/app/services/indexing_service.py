@@ -13,32 +13,23 @@ from app.schemas.document_metadata import DocumentMetadata
 from app.schemas.embedding import EmbeddingRequest
 from app.schemas.indexing import IndexingResponse
 from app.schemas.vector import VectorPoint
+from app.services.document_registry import DocumentRegistry  # ← Added import
 from app.vector_store.base import VectorStore
 from fastapi import UploadFile
 
 
 class IndexingService:
-    """
-    Handles the complete document indexing pipeline.
-
-    Upload
-        ↓
-    Extract Text
-        ↓
-    Chunk Text
-        ↓
-    Generate Embeddings
-        ↓
-    Store in Qdrant
-    """
+    """Handles the complete document indexing pipeline."""
 
     def __init__(
         self,
         embedding_provider: EmbeddingProvider,
         vector_store: VectorStore,
+        registry: DocumentRegistry | None = None,  # ← Added registry parameter
     ):
         self.embedding_provider = embedding_provider
         self.vector_store = vector_store
+        self.registry = registry or DocumentRegistry()  # ← Store self.registry
         self.chunker = FixedChunker()
 
     async def index_document(
@@ -102,7 +93,7 @@ class IndexingService:
                 uploaded_at=datetime.utcnow(),  # noqa: DTZ003
             )
 
-            self.registry.add(metadata)            
+            self.registry.add(metadata)
 
             return IndexingResponse(
                 document_id=document_id,

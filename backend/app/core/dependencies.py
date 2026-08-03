@@ -7,6 +7,7 @@ from app.exceptions import UnsupportedProviderError
 from app.providers.base import LLMProvider
 from app.providers.ollama_provider import OllamaProvider
 from app.retrieval.retriever import Retriever
+from app.services.document_registry import DocumentRegistry
 from app.services.document_service import DocumentService
 from app.services.health_service import HealthService
 from app.services.indexing_service import IndexingService
@@ -18,6 +19,7 @@ from app.vector_store.qdrant_store import QdrantStore
 from fastapi import Depends, Request
 from qdrant_client import AsyncQdrantClient
 
+_document_registry = DocumentRegistry()
 
 def get_qdrant_client(request: Request) -> AsyncQdrantClient:
     return request.app.state.qdrant_client
@@ -73,16 +75,20 @@ def get_product_service(
 def get_health_service(client: AsyncQdrantClient = Depends(get_qdrant_client)) -> HealthService:  # noqa: B008
     return HealthService(client)
 
+def get_document_registry() -> DocumentRegistry:
+    return _document_registry
+
 
 def get_indexing_service(
     embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
     vector_store: VectorStore = Depends(get_vector_store),  # noqa: B008
+    registry: DocumentRegistry = Depends(get_document_registry),  # noqa: B008
 ) -> IndexingService:
     return IndexingService(
         embedding_provider=embedding_provider,
         vector_store=vector_store,
+        registry=registry,  # ← Pass registry instance here
     )
-
 
 def get_retriever(
     embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
