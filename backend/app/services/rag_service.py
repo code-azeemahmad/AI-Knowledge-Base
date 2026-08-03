@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 
+from app.core.logging import logging
 from app.domain.chat import ChatMessage, ChatRequest, ChatRole
 from app.domain.stream import StreamEvent
 from app.providers.base import LLMProvider
@@ -7,6 +8,7 @@ from app.retrieval.prompt_builder import PromptBuilder
 from app.retrieval.retriever import Retriever
 from app.schemas.rag import RAGResponse
 
+logger = logging.getLogger(__name__)
 
 class RAGService:
 
@@ -25,6 +27,17 @@ class RAGService:
 
         # Retrieve relevant context
         results = await self.retriever.retrieve(question)
+
+        if not results:
+            logger.info(f"No relevant context found for query: {question}")
+            return RAGResponse(
+                answer=(
+                    "I couldn't find any relevant information "
+                    "in the indexed documents."
+                ),
+                sources=[],
+            )
+
 
         # Build the RAG prompt
         prompt = PromptBuilder.build(
