@@ -6,6 +6,8 @@ from app.embeddings.ollama_embeddings import OllamaEmbeddingProvider
 from app.exceptions import UnsupportedProviderError
 from app.providers.base import LLMProvider
 from app.providers.ollama_provider import OllamaProvider
+from app.rerankers.base import Reranker
+from app.rerankers.cross_encoder_reranker import CrossEncoderReranker
 from app.retrieval.retriever import Retriever
 from app.services.document_registry import DocumentRegistry
 from app.services.document_service import DocumentService
@@ -100,11 +102,17 @@ def get_retriever(
     )
 
 
+def get_reranker() -> Reranker:
+    return CrossEncoderReranker()
+
+
 def get_rag_service(
     retriever: Retriever = Depends(get_retriever),  # noqa: B008
     llm_provider: LLMProvider = Depends(get_llm_provider),  # noqa: B008
+    reranker: Reranker = Depends(get_reranker),  # noqa: B008
 ) -> RAGService:
     return RAGService(
         retriever=retriever,
         llm_provider=llm_provider,
+        reranker=reranker
     )

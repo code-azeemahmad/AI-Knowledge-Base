@@ -5,6 +5,7 @@ from app.core.logging import logging
 from app.domain.chat import ChatMessage, ChatRequest, ChatRole
 from app.domain.stream import StreamEvent
 from app.providers.base import LLMProvider
+from app.rerankers.base import Reranker
 from app.retrieval.prompt_builder import PromptBuilder
 from app.retrieval.retriever import Retriever
 from app.schemas.rag import RAGResponse
@@ -17,9 +18,11 @@ class RAGService:
         self,
         retriever: Retriever,
         llm_provider: LLMProvider,
+        reranker: Reranker
     ):
         self.retriever = retriever
         self.llm_provider = llm_provider
+        self.reranker = reranker
 
     async def ask(
         self,
@@ -29,6 +32,12 @@ class RAGService:
 
         # Retrieve relevant context
         results = await self.retriever.retrieve(question=question, document_id=document_id,)
+
+        results = await self.reranker.rerank(
+            query=question,
+            results=results,
+            top_k=5,
+        )
 
         if not results:
             logger.info(f"No relevant context found for query: {question}")
@@ -72,7 +81,33 @@ class RAGService:
     ) -> AsyncGenerator[StreamEvent, None]:
 
         # Retrieve relevant context
-        results = await self.retriever.retrieve(question=question, document_id=document_id)
+        results = await self.retriever.retrieve(
+            question=question,
+            document_id=document_id,
+        )
+
+        # Re-rank retrieved chunks
+        results = await self.reranker.rerank(
+            query=question,
+            results=results,
+            top_k=5,
+        )
+
+        # No relevant context
+        if not results:
+            logger.info(
+                f"No relevant context found for query: {question}"
+            )
+
+            yield StreamEvent(
+                type="text",
+                content=(
+                    "I couldn't find any relevant information "
+                    "in the indexed documents."
+                ),
+            )
+
+            return
 
         # Build prompt
         prompt = PromptBuilder.build(
@@ -89,5 +124,6 @@ class RAGService:
             ]
         )
 
+        # Stream response from the LLM
         async for event in self.llm_provider.stream_response(request):
             yield event
