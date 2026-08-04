@@ -6,8 +6,8 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import (
     FieldCondition,
     Filter,
+    FilterSelector,
     MatchValue,
-    PointIdsList,
     PointStruct,
     VectorParams,
 )
@@ -124,11 +124,19 @@ class QdrantStore(VectorStore):
     async def delete(
         self,
         collection: CollectionConfig,
-        point_id: str,
+        document_id: str,
     ) -> None:
+
         await self.client.delete(
             collection_name=collection.name,
-            points_selector=PointIdsList(
-                points=[point_id],
+            points_selector=FilterSelector(
+                filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key="document_id",
+                            match=MatchValue(value=document_id),
+                        )
+                    ]
+                )
             ),
         )

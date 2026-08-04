@@ -66,7 +66,7 @@ class DocumentService:
 
         await self.vector_store.delete(
             collection=DOCUMENTS_COLLECTION,
-            point_id=document_id,
+            document_id=document_id,
         )
 
         return DeleteDocumentResponse(message="Document deleted successfully.")

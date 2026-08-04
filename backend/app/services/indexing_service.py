@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
-from app.chunking.fixed_chunker import FixedChunker
+from app.chunking.recursive_chunker import RecursiveChunker
 from app.core.collections import DOCUMENTS_COLLECTION
 from app.embeddings.base import EmbeddingProvider
 from app.loaders.factory import LoaderFactory
@@ -30,7 +30,7 @@ class IndexingService:
         self.embedding_provider = embedding_provider
         self.vector_store = vector_store
         self.registry = registry or DocumentRegistry()  # ← Store self.registry
-        self.chunker = FixedChunker()
+        self.chunker = RecursiveChunker()
 
     async def index_document(
         self,
