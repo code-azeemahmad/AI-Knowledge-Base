@@ -22,7 +22,7 @@ async def ask(
     service: RAGService = Depends(get_rag_service),  # noqa: B008
 ) -> RAGResponse:
 
-    return await service.ask(request.question)
+    return await service.ask(question=request.question, document_id=request.document_id)
 
 
 @router.post("/stream")
@@ -31,7 +31,10 @@ async def stream(
     service: RAGService = Depends(get_rag_service),  # noqa: B008
 ):
 
-    generator = service.stream_ask(request.question)
+    generator = service.stream_ask(
+        question=request.question,
+        document_id=request.document_id,
+    )
 
     return StreamingResponse(
         sse_event_generator(generator),

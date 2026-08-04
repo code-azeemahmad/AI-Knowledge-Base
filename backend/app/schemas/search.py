@@ -1,8 +1,12 @@
+# backend\app\schemas\search.py
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+
+class SearchFilter(BaseModel):
+    document_id: str | None = None
 
 class SearchRequest(BaseModel):
     query: str
@@ -17,3 +21,4 @@ class SearchResult(BaseModel):
 
 class SearchResponse(BaseModel):
     results: list[SearchResult]
+

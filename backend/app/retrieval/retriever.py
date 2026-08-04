@@ -1,8 +1,9 @@
+# backend\app\retrieval\retriever.py
 from app.core.collections import DOCUMENTS_COLLECTION
 from app.embeddings.base import EmbeddingProvider
 from app.retrieval.retrieval import DEFAULT_RETRIEVAL
 from app.schemas.embedding import EmbeddingRequest
-from app.schemas.search import SearchResult
+from app.schemas.search import SearchFilter, SearchResult
 from app.vector_store.base import VectorStore
 
 
@@ -24,6 +25,7 @@ class Retriever:
         self,
         question: str,
         limit: int | None = None,
+        document_id: str | None = None,
     ) -> list[SearchResult]:
 
         search_limit = limit or DEFAULT_RETRIEVAL.top_k
@@ -34,10 +36,18 @@ class Retriever:
             )
         )
 
+        search_filter = None
+
+        if document_id is not None:
+            search_filter = SearchFilter(
+                document_id=document_id,
+            )
+
         results = await self.vector_store.search(
             collection=DOCUMENTS_COLLECTION,
             query_vector=embedding.embedding,
             limit=search_limit,
+            search_filter=search_filter,
         )
 
         results = [

@@ -9,3 +9,4 @@ class RAGResponse(BaseModel):
 
 class RAGRequest(BaseModel):
     question: str
+    document_id: str | None = None

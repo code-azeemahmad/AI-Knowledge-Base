@@ -1,3 +1,4 @@
+# backend\app\services\rag_service.py
 from collections.abc import AsyncGenerator
 
 from app.core.logging import logging
@@ -23,10 +24,11 @@ class RAGService:
     async def ask(
         self,
         question: str,
+        document_id: str | None = None,
     ) -> RAGResponse:
 
         # Retrieve relevant context
-        results = await self.retriever.retrieve(question)
+        results = await self.retriever.retrieve(question=question, document_id=document_id,)
 
         if not results:
             logger.info(f"No relevant context found for query: {question}")
@@ -66,10 +68,11 @@ class RAGService:
     async def stream_ask(
         self,
         question: str,
+        document_id: str | None = None,
     ) -> AsyncGenerator[StreamEvent, None]:
 
         # Retrieve relevant context
-        results = await self.retriever.retrieve(question)
+        results = await self.retriever.retrieve(question=question, document_id=document_id)
 
         # Build prompt
         prompt = PromptBuilder.build(
