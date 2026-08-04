@@ -11,7 +11,6 @@ from app.query_rewriters.base import QueryRewriter
 from app.query_rewriters.llm_query_rewriter import LLMQueryRewriter
 from app.query_rewriters.noop_query_rewriter import NoOpQueryRewriter
 from app.rerankers.base import Reranker
-from app.rerankers.cross_encoder_reranker import CrossEncoderReranker
 from app.retrieval.retriever import Retriever
 from app.services.conversation_service import ConversationService, ConversationStore
 from app.services.document_registry import DocumentRegistry
@@ -108,10 +107,10 @@ def get_retriever(
         vector_store=vector_store,
     )
 
-
-def get_reranker() -> Reranker:
-    return CrossEncoderReranker()
-
+def get_reranker(
+        request: Request
+) -> Reranker:
+    return request.app.state.reranker
 
 def get_conversation_store() -> ConversationStore:
     return conversation_store

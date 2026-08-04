@@ -6,9 +6,11 @@ from contextlib import asynccontextmanager
 import httpx
 from app.core.collections import ALL_COLLECTIONS
 from app.core.config import settings
+from app.rerankers.cross_encoder_reranker import CrossEncoderReranker
 from app.vector_store.qdrant_store import QdrantStore
 from fastapi import FastAPI
 from qdrant_client import AsyncQdrantClient
+from sentence_transformers import CrossEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -36,16 +38,27 @@ async def lifespan(app: FastAPI):
         app.state.http_client = httpx.AsyncClient(
             timeout=timeout,
         )
+        logger.info("Shared AsyncClient initialized with timeout: %s seconds.", timeout)
 
-        logger.info("Shared AsyncClient initialized.")
 
         # Shared Qdrant client
         app.state.qdrant_client = AsyncQdrantClient(
             host=settings.QDRANT_HOST,
             port=settings.QDRANT_PORT,
         )
+        logger.info(
+            "AsyncQdrantClient initialized (Host: %s, Port: %s).",
+            settings.QDRANT_HOST,
+            settings.QDRANT_PORT,
+        )
 
-        logger.info("Shared AsyncQdrantClient initialized.")
+
+        app.state.reranker = CrossEncoderReranker(
+            CrossEncoder("BAAI/bge-reranker-base")
+        )
+        logger.info("CrossEncoder loaded.")
+
+
 
         # Ensure collections exist
         store = QdrantStore(app.state.qdrant_client)

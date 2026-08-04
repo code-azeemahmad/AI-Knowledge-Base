@@ -6,11 +6,9 @@ from sentence_transformers import CrossEncoder
 
 class CrossEncoderReranker(Reranker):
 
-    def __init__(self):
+    def __init__(self, model: CrossEncoder):
 
-        self.model = CrossEncoder(
-            "BAAI/bge-reranker-base"
-        )
+        self.model = model
 
     async def rerank(
         self,

@@ -58,7 +58,6 @@ class Settings(BaseSettings):
 
     EMBEDDING_MODEL: str = "nomic-embed-text"
     EMBEDDING_DIMENSION: int = 768
-    query_rewriter: str = "noop"
 
     # --------------------------------------------------
     # Qdrant (New RAG Configuration)
@@ -82,6 +81,18 @@ class Settings(BaseSettings):
 
     CHUNK_SIZE: int = 500
     CHUNK_OVERLAP: int = 100
+
+    # --------------------------------------------------
+    # History aware query rewriting
+    # --------------------------------------------------
+
+    query_rewriter: str = "noop"
+
+    # --------------------------------------------------
+    # Reranking
+    # --------------------------------------------------
+
+    reranker_model: str = "BAAI/bge-reranker-base"
 
 
 @lru_cache
