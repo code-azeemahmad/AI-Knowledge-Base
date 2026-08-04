@@ -8,9 +8,11 @@ from app.providers.base import LLMProvider
 from app.rerankers.base import Reranker
 from app.retrieval.prompt_builder import PromptBuilder
 from app.retrieval.retriever import Retriever
-from app.schemas.rag import RAGResponse
+from app.schemas.rag import RAGRequest, RAGResponse
+from app.services.conversation_service import ConversationService
 
 logger = logging.getLogger(__name__)
+
 
 class RAGService:
 
@@ -18,29 +20,61 @@ class RAGService:
         self,
         retriever: Retriever,
         llm_provider: LLMProvider,
-        reranker: Reranker
+        reranker: Reranker,
+        conversation_service: ConversationService,
     ):
         self.retriever = retriever
         self.llm_provider = llm_provider
         self.reranker = reranker
+        self.conversation_service = conversation_service
 
     async def ask(
         self,
-        question: str,
-        document_id: str | None = None,
+        request: RAGRequest,
     ) -> RAGResponse:
 
-        # Retrieve relevant context
-        results = await self.retriever.retrieve(question=question, document_id=document_id,)
+        # Load conversation history
+        history = await self.conversation_service.get_messages(
+            request.conversation_id,
+        )
 
+        history = await self.conversation_service.get_messages(
+            request.conversation_id,
+        )
+
+        print("=" * 40)
+        print("Conversation History")
+        for msg in history:
+            print(msg.role, ":", msg.content)
+        print("=" * 40)
+
+        # Save user message
+        await self.conversation_service.append_message(
+            request.conversation_id,
+            ChatMessage(
+                role=ChatRole.USER,
+                content=request.question,
+            ),
+        )
+
+        # Retrieve relevant chunks
+        results = await self.retriever.retrieve(
+            question=request.question,
+            document_id=request.document_id,
+        )
+
+        # Re-rank chunks
         results = await self.reranker.rerank(
-            query=question,
+            query=request.question,
             results=results,
             top_k=5,
         )
 
         if not results:
-            logger.info(f"No relevant context found for query: {question}")
+            logger.info(
+                f"No relevant context found for query: {request.question}"
+            )
+
             return RAGResponse(
                 answer=(
                     "I couldn't find any relevant information "
@@ -49,14 +83,14 @@ class RAGService:
                 sources=[],
             )
 
-
-        # Build the RAG prompt
+        # Build prompt
         prompt = PromptBuilder.build(
-            question=question,
+            history=history,
             context=results,
+            question=request.question,
         )
 
-        # Generate the final answer
+        # Generate response
         response = await self.llm_provider.generate_response(
             ChatRequest(
                 messages=[
@@ -68,35 +102,55 @@ class RAGService:
             )
         )
 
+        # Save assistant message
+        await self.conversation_service.append_message(
+            request.conversation_id,
+            ChatMessage(
+                role=ChatRole.ASSISTANT,
+                content=response.content,
+            ),
+        )
+
         return RAGResponse(
             answer=response.content,
             sources=results,
         )
 
-
     async def stream_ask(
         self,
-        question: str,
-        document_id: str | None = None,
+        request: RAGRequest,
     ) -> AsyncGenerator[StreamEvent, None]:
 
-        # Retrieve relevant context
+        # Load conversation history
+        history = await self.conversation_service.get_messages(
+            request.conversation_id,
+        )
+
+        # Save user message
+        await self.conversation_service.append_message(
+            request.conversation_id,
+            ChatMessage(
+                role=ChatRole.USER,
+                content=request.question,
+            ),
+        )
+
+        # Retrieve relevant chunks
         results = await self.retriever.retrieve(
-            question=question,
-            document_id=document_id,
+            question=request.question,
+            document_id=request.document_id,
         )
 
         # Re-rank retrieved chunks
         results = await self.reranker.rerank(
-            query=question,
+            query=request.question,
             results=results,
             top_k=5,
         )
 
-        # No relevant context
         if not results:
             logger.info(
-                f"No relevant context found for query: {question}"
+                f"No relevant context found for query: {request.question}"
             )
 
             yield StreamEvent(
@@ -106,16 +160,16 @@ class RAGService:
                     "in the indexed documents."
                 ),
             )
-
             return
 
         # Build prompt
         prompt = PromptBuilder.build(
-            question=question,
+            history=history,
             context=results,
+            question=request.question,
         )
 
-        request = ChatRequest(
+        chat_request = ChatRequest(
             messages=[
                 ChatMessage(
                     role=ChatRole.USER,
@@ -124,6 +178,21 @@ class RAGService:
             ]
         )
 
-        # Stream response from the LLM
-        async for event in self.llm_provider.stream_response(request):
+        parts: list[str] = []
+
+        # Stream response
+        async for event in self.llm_provider.stream_response(chat_request):
+
+            if event.type == "text":
+                parts.append(event.content)
+
             yield event
+
+        # Save assistant message
+        await self.conversation_service.append_message(
+            request.conversation_id,
+            ChatMessage(
+                role=ChatRole.ASSISTANT,
+                content="".join(parts),
+            ),
+        )

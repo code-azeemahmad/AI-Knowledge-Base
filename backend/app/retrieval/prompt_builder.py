@@ -1,3 +1,5 @@
+# backend\app\retrieval\prompt_builder.py
+from app.domain.chat import ChatRole
 from app.schemas.search import SearchResult
 
 
@@ -8,27 +10,55 @@ class PromptBuilder:
 
     @staticmethod
     def build(
+        history,
         question: str,
         context: list[SearchResult],
     ) -> str:
 
-        context_text = "\n\n".join(result.payload["text"] for result in context)
+        history_text = ""
+
+        if history:
+            history_lines = []
+
+            for message in history:
+                role = (
+                    "User"
+                    if message.role == ChatRole.USER
+                    else "Assistant"
+                )
+
+                history_lines.append(
+                    f"{role}: {message.content}"
+                )
+
+            history_text = (
+                "Conversation History\n"
+                "--------------------\n"
+                f"{chr(10).join(history_lines)}\n\n"
+            )
+
+        context_text = "\n\n".join(
+            result.payload["text"]
+            for result in context
+        )
 
         return f"""You are a helpful AI assistant.
-Answer the user's question using ONLY the provided context.
-If the answer cannot be found in the context, say:
+
+Answer ONLY using the retrieved context.
+
+If the answer cannot be found in the retrieved context, reply:
+
 "I don't have enough information in the provided documents."
+
 Do not make up facts.
-Context:
+
+{history_text}Retrieved Context
+-----------------
 {context_text}
-Question:
+
+Current Question
+----------------
 {question}
+
 Answer:
 """
-
-
-# Why This Prompt? It contains four important instructions:
-# 1. Role
-# 2. Grounding
-# 3. Fallback
-# 4. Context + Question

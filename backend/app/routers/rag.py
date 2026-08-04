@@ -1,3 +1,4 @@
+# backend\app\routers\rag.py
 from app.core.dependencies import get_rag_service
 from app.schemas.rag import RAGRequest, RAGResponse
 from app.serializers.sse import (
@@ -22,7 +23,7 @@ async def ask(
     service: RAGService = Depends(get_rag_service),  # noqa: B008
 ) -> RAGResponse:
 
-    return await service.ask(question=request.question, document_id=request.document_id)
+    return await service.ask(request)
 
 
 @router.post("/stream")
@@ -31,10 +32,7 @@ async def stream(
     service: RAGService = Depends(get_rag_service),  # noqa: B008
 ):
 
-    generator = service.stream_ask(
-        question=request.question,
-        document_id=request.document_id,
-    )
+    generator = service.stream_ask(request)
 
     return StreamingResponse(
         sse_event_generator(generator),

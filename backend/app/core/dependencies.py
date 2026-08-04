@@ -1,5 +1,6 @@
 # backend\app\core\dependencies.py
 import httpx
+from app.conversations.memory_store import InMemoryConversationStore
 from app.core.config import settings
 from app.embeddings.base import EmbeddingProvider
 from app.embeddings.ollama_embeddings import OllamaEmbeddingProvider
@@ -9,6 +10,7 @@ from app.providers.ollama_provider import OllamaProvider
 from app.rerankers.base import Reranker
 from app.rerankers.cross_encoder_reranker import CrossEncoderReranker
 from app.retrieval.retriever import Retriever
+from app.services.conversation_service import ConversationService, ConversationStore
 from app.services.document_registry import DocumentRegistry
 from app.services.document_service import DocumentService
 from app.services.health_service import HealthService
@@ -22,6 +24,8 @@ from fastapi import Depends, Request
 from qdrant_client import AsyncQdrantClient
 
 _document_registry = DocumentRegistry()
+conversation_store = InMemoryConversationStore()
+
 
 def get_qdrant_client(request: Request) -> AsyncQdrantClient:
     return request.app.state.qdrant_client
@@ -106,13 +110,25 @@ def get_reranker() -> Reranker:
     return CrossEncoderReranker()
 
 
+def get_conversation_store() -> ConversationStore:
+    return conversation_store
+
+
+def get_conversation_service(
+    store: ConversationStore = Depends(get_conversation_store),  # noqa: B008
+) -> ConversationService:
+    return ConversationService(store)
+
 def get_rag_service(
     retriever: Retriever = Depends(get_retriever),  # noqa: B008
     llm_provider: LLMProvider = Depends(get_llm_provider),  # noqa: B008
     reranker: Reranker = Depends(get_reranker),  # noqa: B008
+    conversation_service: ConversationService = Depends(get_conversation_service),  # noqa: B008
 ) -> RAGService:
     return RAGService(
         retriever=retriever,
         llm_provider=llm_provider,
-        reranker=reranker
+        reranker=reranker,
+        conversation_service=conversation_service,
     )
+
