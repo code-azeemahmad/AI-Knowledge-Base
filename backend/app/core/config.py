@@ -58,6 +58,7 @@ class Settings(BaseSettings):
 
     EMBEDDING_MODEL: str = "nomic-embed-text"
     EMBEDDING_DIMENSION: int = 768
+    query_rewriter: str = "noop"
 
     # --------------------------------------------------
     # Qdrant (New RAG Configuration)

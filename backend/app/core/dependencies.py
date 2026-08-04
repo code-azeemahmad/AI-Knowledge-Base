@@ -7,6 +7,9 @@ from app.embeddings.ollama_embeddings import OllamaEmbeddingProvider
 from app.exceptions import UnsupportedProviderError
 from app.providers.base import LLMProvider
 from app.providers.ollama_provider import OllamaProvider
+from app.query_rewriters.base import QueryRewriter
+from app.query_rewriters.llm_query_rewriter import LLMQueryRewriter
+from app.query_rewriters.noop_query_rewriter import NoOpQueryRewriter
 from app.rerankers.base import Reranker
 from app.rerankers.cross_encoder_reranker import CrossEncoderReranker
 from app.retrieval.retriever import Retriever
@@ -119,16 +122,29 @@ def get_conversation_service(
 ) -> ConversationService:
     return ConversationService(store)
 
+def get_query_rewriter(
+    llm_provider: LLMProvider = Depends(get_llm_provider),  # noqa: B008
+) -> QueryRewriter:
+
+    provider = settings.query_rewriter.lower()
+
+    if provider == "llm":
+        return LLMQueryRewriter(llm_provider)
+
+    return NoOpQueryRewriter()
+
 def get_rag_service(
     retriever: Retriever = Depends(get_retriever),  # noqa: B008
     llm_provider: LLMProvider = Depends(get_llm_provider),  # noqa: B008
     reranker: Reranker = Depends(get_reranker),  # noqa: B008
     conversation_service: ConversationService = Depends(get_conversation_service),  # noqa: B008
+    query_rewriter: QueryRewriter = Depends(get_query_rewriter),  # noqa: B008
 ) -> RAGService:
     return RAGService(
         retriever=retriever,
         llm_provider=llm_provider,
         reranker=reranker,
         conversation_service=conversation_service,
+        query_rewriter=query_rewriter,
     )
 

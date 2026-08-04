@@ -5,6 +5,7 @@ from app.core.logging import logging
 from app.domain.chat import ChatMessage, ChatRequest, ChatRole
 from app.domain.stream import StreamEvent
 from app.providers.base import LLMProvider
+from app.query_rewriters.base import QueryRewriter
 from app.rerankers.base import Reranker
 from app.retrieval.prompt_builder import PromptBuilder
 from app.retrieval.retriever import Retriever
@@ -22,11 +23,13 @@ class RAGService:
         llm_provider: LLMProvider,
         reranker: Reranker,
         conversation_service: ConversationService,
+        query_rewriter: QueryRewriter,
     ):
         self.retriever = retriever
         self.llm_provider = llm_provider
         self.reranker = reranker
         self.conversation_service = conversation_service
+        self.query_rewriter = query_rewriter
 
     async def ask(
         self,
@@ -38,16 +41,6 @@ class RAGService:
             request.conversation_id,
         )
 
-        history = await self.conversation_service.get_messages(
-            request.conversation_id,
-        )
-
-        print("=" * 40)
-        print("Conversation History")
-        for msg in history:
-            print(msg.role, ":", msg.content)
-        print("=" * 40)
-
         # Save user message
         await self.conversation_service.append_message(
             request.conversation_id,
@@ -58,8 +51,13 @@ class RAGService:
         )
 
         # Retrieve relevant chunks
-        results = await self.retriever.retrieve(
+        rewritten_question = await self.query_rewriter.rewrite(
             question=request.question,
+            history=history,
+        )
+
+        results = await self.retriever.retrieve(
+            question=rewritten_question,
             document_id=request.document_id,
         )
 
@@ -136,8 +134,13 @@ class RAGService:
         )
 
         # Retrieve relevant chunks
-        results = await self.retriever.retrieve(
+        rewritten_question = await self.query_rewriter.rewrite(
             question=request.question,
+            history=history,
+        )
+
+        results = await self.retriever.retrieve(
+            question=rewritten_question,
             document_id=request.document_id,
         )
 
