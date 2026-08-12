@@ -3,12 +3,13 @@ from collections.abc import AsyncGenerator
 
 from app.core.logging import logging
 from app.domain.chat import ChatMessage, ChatRequest, ChatRole
-from app.domain.stream import StreamEvent
+from app.domain.stream import StreamEvent, StreamEventType
 from app.evaluations.dataset import EVALUATION_DATASET
 from app.evaluations.retrieval_evaluator import RetrievalEvaluator
 from app.providers.base import LLMProvider
 from app.query_rewriters.base import QueryRewriter
 from app.rerankers.base import Reranker
+from app.retrieval.base import BaseRetriever
 from app.retrieval.hybrid import HybridRetriever
 from app.retrieval.prompt_builder import PromptBuilder
 from app.schemas.rag import RAGRequest, RAGResponse
@@ -21,7 +22,7 @@ class RAGService:
 
     def __init__(
         self,
-        retriever: HybridRetriever,
+        retriever: BaseRetriever,
         llm_provider: LLMProvider,
         reranker: Reranker,
         conversation_service: ConversationService,
@@ -190,13 +191,19 @@ class RAGService:
             )
 
             yield StreamEvent(
-                type="text",
+                type=StreamEventType.TEXT,
                 content=(
                     "I couldn't find any relevant information "
                     "in the indexed documents."
                 ),
             )
             return
+
+        # Emit sources event to stream subscribers
+        yield StreamEvent(
+            type=StreamEventType.SOURCES,
+            sources=[r.model_dump() for r in results],
+        )
 
         # Build prompt
         prompt = PromptBuilder.build(

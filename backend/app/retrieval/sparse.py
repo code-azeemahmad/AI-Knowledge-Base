@@ -18,8 +18,8 @@ class SparseRetriever(BaseRetriever):
     async def retrieve(
         self,
         question: str,
-        document_id: str | None = None,
         limit: int | None = None,
+        document_id: str | None = None,
     ) -> list[SearchResult]:
 
         search_limit = limit or 20

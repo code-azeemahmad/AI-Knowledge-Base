@@ -30,7 +30,7 @@ class RetrievalEvaluator:
         k: int = 5,
     ) -> float:
         top_results = results[:k]
-        relevant_ids = {str(cid) for cid in sample.relevant_chunk_ids}
+        relevant_ids = set(sample.relevant_chunk_ids)
         if not relevant_ids:
             return 0.0
 
@@ -51,7 +51,7 @@ class RetrievalEvaluator:
         if not top_results:
             return 0.0
 
-        relevant_ids = {str(cid) for cid in sample.relevant_chunk_ids}
+        relevant_ids = set(sample.relevant_chunk_ids)
 
         relevant_count = sum(
             1
@@ -66,7 +66,7 @@ class RetrievalEvaluator:
         sample: EvaluationSample,
         k: int = 5,
     ) -> float:
-        relevant_ids = {str(cid) for cid in sample.relevant_chunk_ids}
+        relevant_ids = set(sample.relevant_chunk_ids)
         for res in results[:k]:
             if _get_result_ids(res) & relevant_ids:
                 return 1.0
@@ -77,7 +77,7 @@ class RetrievalEvaluator:
         results: list[SearchResult],
         sample: EvaluationSample,
     ) -> float:
-        relevant_ids = {str(cid) for cid in sample.relevant_chunk_ids}
+        relevant_ids = set(sample.relevant_chunk_ids)
         for index, res in enumerate(results, start=1):
             if _get_result_ids(res) & relevant_ids:
                 return 1.0 / index

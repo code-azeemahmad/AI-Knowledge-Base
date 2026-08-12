@@ -9,7 +9,11 @@ from app.routers.rag import router as rag_router
 from app.routers.retrieval import router as retrieval_router
 from app.routers.search import router as search_router
 from fastapi import FastAPI
+# pyrefly: ignore [missing-import]
+from fastapi.middleware.cors import CORSMiddleware
+# pyrefly: ignore [missing-import]
 from fastapi.openapi.docs import get_swagger_ui_html
+# pyrefly: ignore [missing-import]
 from fastapi.responses import HTMLResponse
 
 app = FastAPI(
@@ -19,6 +23,15 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url=None,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Your existing custom CSS
 CUSTOM_SWAGGER_CSS = """

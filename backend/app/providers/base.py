@@ -19,7 +19,7 @@ class LLMProvider(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    async def stream_response(
+    def stream_response(
         self,
         request: ChatRequest,
     ) -> AsyncGenerator[StreamEvent, None]:

@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans;
+  }
+}
+
+/* Custom scrollbars for clean minimal Google aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Pulsing text indicator dot for streaming state */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.animate-pulse-dot-1 {
+  animation: pulse-dot 1.2s infinite ease-in-out 0s;
+}
+.animate-pulse-dot-2 {
+  animation: pulse-dot 1.2s infinite ease-in-out 0.2s;
+}
+.animate-pulse-dot-3 {
+  animation: pulse-dot 1.2s infinite ease-in-out 0.4s;
+}

@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from app.loaders.base import DocumentLoader
+from app.loaders.docx_loader import DocxLoader
 from app.loaders.pdf_loader import PDFLoader
+from app.loaders.text_loader import TextLoader
 
 
 class LoaderFactory:
@@ -12,6 +14,12 @@ class LoaderFactory:
 
     _loaders: dict[str, type[DocumentLoader]] = {  # noqa: RUF012
         ".pdf": PDFLoader,
+        ".txt": TextLoader,
+        ".md": TextLoader,
+        ".json": TextLoader,
+        ".csv": TextLoader,
+        ".log": TextLoader,
+        ".docx": DocxLoader,
     }
 
     @classmethod
