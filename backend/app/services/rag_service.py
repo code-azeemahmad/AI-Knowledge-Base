@@ -63,7 +63,7 @@ class RAGService:
 
         # Re-rank chunks
         results = await self.reranker.rerank(
-            query=request.question,
+            query=rewritten_question,
             results=results,
             top_k=5,
         )
@@ -146,7 +146,7 @@ class RAGService:
 
         # Re-rank retrieved chunks
         results = await self.reranker.rerank(
-            query=request.question,
+            query=rewritten_question,
             results=results,
             top_k=5,
         )

@@ -2,7 +2,9 @@ from app.core.collections import CollectionConfig
 from app.schemas.search import SearchFilter, SearchResult
 from app.schemas.vector import VectorPoint
 from app.vector_store.base import VectorStore
+# pyrefly: ignore [missing-import]
 from qdrant_client import AsyncQdrantClient
+# pyrefly: ignore [missing-import]
 from qdrant_client.models import (
     FieldCondition,
     Filter,
@@ -109,6 +111,7 @@ class QdrantStore(VectorStore):
             query=query_vector,
             limit=limit,
             with_payload=True,
+            with_vectors=True,
             query_filter=qdrant_filter,
         )
 
@@ -117,6 +120,13 @@ class QdrantStore(VectorStore):
                 id=point.id,
                 score=point.score,
                 payload=point.payload or {},
+                vector=(
+                    point.vector
+                    if isinstance(point.vector, list)
+                    else list(point.vector.values())[0]
+                    if isinstance(point.vector, dict)
+                    else None
+                ),
             )
             for point in results.points
         ]

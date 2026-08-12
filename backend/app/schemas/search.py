@@ -17,7 +17,8 @@ class SearchResult(BaseModel):
     id: UUID
     score: float
     payload: dict[str, Any]
-    
+    vector: list[float] | None = Field(default=None, exclude=True)
+
 
 class SearchResponse(BaseModel):
     results: list[SearchResult]

@@ -16,6 +16,7 @@ from app.retrieval.bm25_index import BM25Index
 from app.retrieval.dense import DenseRetriever
 from app.retrieval.fusion import FusionStrategy
 from app.retrieval.hybrid import HybridRetriever
+from app.retrieval.mmr import MMRSelector
 from app.retrieval.rrf_fusion import ReciprocalRankFusion
 from app.retrieval.sparse import SparseRetriever
 from app.services.conversation_service import ConversationService, ConversationStore
@@ -130,15 +131,23 @@ def get_sparse_retriever(
     )
 
 
+def get_mmr_selector() -> MMRSelector:
+    return MMRSelector(lambda_param=0.7)
+
+
 def get_hybrid_retriever(
     dense: BaseRetriever = Depends(get_dense_retriever),  # noqa: B008
     sparse: BaseRetriever = Depends(get_sparse_retriever),  # noqa: B008
     fusion: FusionStrategy = Depends(get_fusion_strategy),  # noqa: B008
+    mmr: MMRSelector = Depends(get_mmr_selector),  # noqa: B008
+    embedding_provider: EmbeddingProvider = Depends(get_embedding_provider),  # noqa: B008
 ) -> BaseRetriever:
     return HybridRetriever(
         dense=dense,
         sparse=sparse,
         fusion=fusion,
+        mmr=mmr,
+        embedding_provider=embedding_provider,
     )
 
 
