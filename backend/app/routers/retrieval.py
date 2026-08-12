@@ -1,5 +1,5 @@
-from app.core.dependencies import get_retriever
-from app.retrieval.retriever import Retriever
+from app.core.dependencies import get_hybrid_retriever
+from app.retrieval.hybrid import HybridRetriever
 from app.schemas.search import SearchResult
 from fastapi import APIRouter, Depends, Query
 
@@ -16,7 +16,7 @@ router = APIRouter(
 async def retrieve(
     question: str = Query(...),
     limit: int = Query(default=5, ge=1, le=20),
-    retriever: Retriever = Depends(get_retriever),  # noqa: B008
+    retriever: HybridRetriever = Depends(get_hybrid_retriever),  # noqa: B008
 ) -> list[SearchResult]:
     return await retriever.retrieve(
         question=question,

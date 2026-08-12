@@ -86,7 +86,7 @@ class Settings(BaseSettings):
     # History aware query rewriting
     # --------------------------------------------------
 
-    query_rewriter: str = "noop"
+    query_rewriter: str = "llm"
 
     # --------------------------------------------------
     # Reranking

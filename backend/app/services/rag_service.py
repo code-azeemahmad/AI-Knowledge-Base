@@ -7,8 +7,8 @@ from app.domain.stream import StreamEvent
 from app.providers.base import LLMProvider
 from app.query_rewriters.base import QueryRewriter
 from app.rerankers.base import Reranker
+from app.retrieval.hybrid import HybridRetriever
 from app.retrieval.prompt_builder import PromptBuilder
-from app.retrieval.retriever import Retriever
 from app.schemas.rag import RAGRequest, RAGResponse
 from app.services.conversation_service import ConversationService
 
@@ -19,7 +19,7 @@ class RAGService:
 
     def __init__(
         self,
-        retriever: Retriever,
+        retriever: HybridRetriever,
         llm_provider: LLMProvider,
         reranker: Reranker,
         conversation_service: ConversationService,

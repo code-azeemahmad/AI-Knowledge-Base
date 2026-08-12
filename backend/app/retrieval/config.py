@@ -1,3 +1,4 @@
+# backend\app\retrieval\config.py
 from dataclasses import dataclass
 
 
@@ -9,6 +10,11 @@ class RetrievalConfig:
 
     top_k: int
     score_threshold: float
+
+    rerank_top_k: int = 5
+
+    dense_weight: float = 1.0
+    sparse_weight: float = 1.0
 
 
 DEFAULT_RETRIEVAL = RetrievalConfig(

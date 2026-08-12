@@ -1,13 +1,15 @@
-# backend\app\retrieval\retriever.py
+# backend\app\retrieval\dense.py
 from app.core.collections import DOCUMENTS_COLLECTION
 from app.embeddings.base import EmbeddingProvider
-from app.retrieval.retrieval import DEFAULT_RETRIEVAL
+
+from app.retrieval.base import BaseRetriever
+from app.retrieval.config import DEFAULT_RETRIEVAL
 from app.schemas.embedding import EmbeddingRequest
 from app.schemas.search import SearchFilter, SearchResult
 from app.vector_store.base import VectorStore
 
 
-class Retriever:
+class DenseRetriever(BaseRetriever):
     """
     Retrieves the most relevant document chunks
     for a user question.

@@ -10,8 +10,6 @@ class NoOpQueryRewriter(QueryRewriter):
         question: str,
         history: list[ChatMessage],
     ) -> str:
-        if not history:
-            return question
         """
         Return the original question unchanged.
         """
