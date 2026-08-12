@@ -4,6 +4,8 @@ from collections.abc import AsyncGenerator
 from app.core.logging import logging
 from app.domain.chat import ChatMessage, ChatRequest, ChatRole
 from app.domain.stream import StreamEvent
+from app.evaluations.dataset import EVALUATION_DATASET
+from app.evaluations.retrieval_evaluator import RetrievalEvaluator
 from app.providers.base import LLMProvider
 from app.query_rewriters.base import QueryRewriter
 from app.rerankers.base import Reranker
@@ -109,9 +111,40 @@ class RAGService:
             ),
         )
 
+        # --- Inline RAG evaluation ---
+        evaluation_metrics: dict | None = None
+        try:
+            user_q = request.question.strip().lower()
+            rewritten_q = rewritten_question.strip().lower()
+            
+            matched_sample = next(
+                (
+                    s for s in EVALUATION_DATASET
+                    if s.question.strip().lower() == user_q
+                    or s.question.strip().lower() == rewritten_q
+                    or s.question.lower() in user_q
+                    or user_q in s.question.lower()
+                    or s.question.lower() in rewritten_q
+                    or rewritten_q in s.question.lower()
+                ),
+                None,
+            )
+            if matched_sample:
+                eval_result = RetrievalEvaluator.evaluate(
+                    results=results,
+                    sample=matched_sample,
+                    k=5,
+                )
+                evaluation_metrics = (
+                    eval_result if isinstance(eval_result, dict) else eval_result.to_dict()
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"RAG evaluation failed: {exc}")
+
         return RAGResponse(
             answer=response.content,
             sources=results,
+            evaluation=evaluation_metrics,
         )
 
     async def stream_ask(
